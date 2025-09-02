@@ -1,0 +1,7 @@
+{
+  "name": "Simulador de Entrevista",
+  "description": "Um aplicativo de IA para gerar perguntas de entrevista com base em uma vaga e currículo, e fornecer feedback sobre as respostas do usuário usando o método STAR.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
