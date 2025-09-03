@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -8,11 +8,13 @@ import TextAreaInput from './TextAreaInput';
 import Button from './Button';
 import LoadingSpinner from './LoadingSpinner';
 import { HistoryItem } from '../hooks/useHistory';
-import { LightBulbIcon, StopIcon, TrashIcon } from './Icons';
+import { LightBulbIcon, StopIcon, TrashIcon, MessageCircleIcon } from './Icons';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
 
 declare const mammoth: any;
+const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
 
 interface SimulatorViewProps {
   addHistoryItem: (item: Omit<HistoryItem, 'id' | 'timestamp'>) => void;
@@ -35,10 +37,40 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ addHistoryItem }) => {
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const speechRecognitionRef = useRef<any | null>(null);
+
 
   const handleStartRecording = async () => {
     setError(null);
+    setAnswer('');
     try {
+      if (!SpeechRecognition) {
+        setError("Seu navegador não suporta a transcrição de áudio. Tente usar o Chrome ou Edge.");
+        return;
+      }
+
+      // Start Speech Recognition
+      speechRecognitionRef.current = new SpeechRecognition();
+      speechRecognitionRef.current.continuous = true;
+      speechRecognitionRef.current.interimResults = true;
+      speechRecognitionRef.current.lang = 'pt-BR';
+
+      speechRecognitionRef.current.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setAnswer(transcript);
+      };
+
+      speechRecognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setError(`Erro na transcrição: ${event.error}`);
+      };
+      
+      speechRecognitionRef.current.start();
+
+      // Start Media Recorder
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
@@ -56,6 +88,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ addHistoryItem }) => {
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
+
     } catch (err) {
       console.error("Error starting recording:", err);
       setError("Não foi possível acessar o microfone. Verifique as permissões do navegador.");
@@ -66,14 +99,26 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ addHistoryItem }) => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.stop();
+    }
     setIsRecording(false);
   };
+
+  useEffect(() => {
+    return () => {
+        if (isRecording) {
+            handleStopRecording();
+        }
+    }
+  }, [isRecording]);
 
   const handleClearRecording = () => {
     if (audioURL) {
       URL.revokeObjectURL(audioURL);
     }
     setAudioURL(null);
+    setAnswer('');
   };
 
   const handleGenerateQuestion = useCallback(async () => {
@@ -109,7 +154,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ addHistoryItem }) => {
     setIsLoadingFeedback(true);
     
     try {
-      const generatedFeedback = await evaluateAnswer(question, answer);
+      const textAnswer = answer || "O usuário forneceu apenas uma resposta em áudio.";
+      const generatedFeedback = await evaluateAnswer(question, textAnswer);
       setFeedback(generatedFeedback);
       addHistoryItem({ question, answer, feedback: generatedFeedback, audioURL });
     } catch (e) {
@@ -173,8 +219,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ addHistoryItem }) => {
     setAnswer('');
     setFeedback('');
     setError(null);
-    handleClearRecording();
     if (isRecording) handleStopRecording();
+    handleClearRecording();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -226,16 +272,19 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ addHistoryItem }) => {
                 </p>
             </div>
             
-            <TextAreaInput id="answer" label="Sua Resposta (Texto)" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Digite sua resposta aqui, tentando usar o método STAR..." />
+            <div className="relative">
+              <TextAreaInput id="answer" label="Sua Resposta (Texto)" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={isRecording ? "Ouvindo..." : "Digite sua resposta aqui, ou grave seu áudio para transcrevê-la..."} />
+              {isRecording && <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>}
+            </div>
 
             <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Sua Resposta (Áudio)</label>
                 <div className="bg-slate-900 border border-slate-700 rounded-md p-3 space-y-3">
                 {!isRecording && !audioURL && (
-                    <Button variant="secondary" onClick={handleStartRecording}>Gravar Áudio</Button>
+                    <Button variant="secondary" onClick={handleStartRecording}>Gravar e Transcrever</Button>
                 )}
                 {isRecording && (
-                    <Button variant="secondary" onClick={handleStopRecording} className="bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/40"><StopIcon/> Parar Gravação</Button>
+                    <Button variant="secondary" onClick={handleStopRecording} className="bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/40">Parar Gravação</Button>
                 )}
                 {audioURL && (
                     <div className="space-y-3">

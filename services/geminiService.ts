@@ -39,7 +39,7 @@ export async function generateQuestion(jobDescription: string, resume: string): 
 
 export async function evaluateAnswer(question: string, answer: string): Promise<string> {
   const prompt = `
-    Você é um coach de carreira especializado em preparação para entrevistas. Sua tarefa é avaliar uma resposta de entrevista com foco no método STAR (Situação, Tarefa, Ação, Resultado).
+    Você é um coach de carreira sênior e especialista em entrevistas, avaliando uma resposta de um candidato com base no método STAR (Situação, Tarefa, Ação, Resultado).
 
     A pergunta da entrevista foi: 
     "${question}"
@@ -47,17 +47,43 @@ export async function evaluateAnswer(question: string, answer: string): Promise<
     A resposta do candidato foi: 
     "${answer}"
 
-    Forneça um feedback construtivo e detalhado sobre como o candidato poderia melhorar sua resposta usando o método STAR. Siga esta estrutura:
+    Sua tarefa é fornecer um feedback detalhado, incluindo notas de 1 a 10 para cada pilar do STAR e uma média geral. Siga RIGOROSAMENTE a estrutura abaixo, usando Markdown para formatação.
 
-    1.  **Análise Geral:** Um breve resumo da resposta.
-    2.  **Feedback sobre STAR:**
-        *   **Situação:** A situação foi claramente descrita? O que poderia ser melhorado?
-        *   **Tarefa:** A tarefa ou objetivo foi bem definido? O que poderia ser melhorado?
-        *   **Ação:** As ações tomadas pelo candidato foram específicas e detalhadas? O que poderia ser melhorado?
-        *   **Resultado:** O resultado foi quantificável e demonstrou impacto? O que poderia ser melhorado?
-    3.  **Sugestão de Melhoria:** Forneça uma versão reescrita ou sugestões concretas de como a resposta poderia ser aprimorada para seguir melhor o método STAR.
+    ---
 
-    Seja encorajador, claro e prático. Formate sua resposta em Markdown para uma melhor legibilidade, usando títulos (ex: ### Análise Geral), listas de marcadores (*) e negrito (**) para estruturar o feedback.
+    ### Avaliação Geral
+    **Nota Média:** [Insira a nota média de 1 a 10, pode ser um número decimal como 8.5]
+    **Pontos Fortes:** [Liste os 1-2 pilares do STAR onde o candidato se saiu melhor. Ex: Situação e Ação]
+    **Pontos a Melhorar:** [Liste os 1-2 pilares do STAR que mais precisam de atenção. Ex: Tarefa e Resultado]
+
+    ---
+
+    ### Feedback Detalhado por Pilar
+
+    **1. Situação (Nota: [Nota de 1 a 10])**
+    *   **Análise:** [Análise concisa sobre como o candidato descreveu a situação.]
+    *   **Sugestão:** [Sugestão de melhoria específica para a Situação.]
+
+    **2. Tarefa (Nota: [Nota de 1 a 10])**
+    *   **Análise:** [Análise concisa sobre como o candidato descreveu a tarefa.]
+    *   **Sugestão:** [Sugestão de melhoria específica para a Tarefa.]
+
+    **3. Ação (Nota: [Nota de 1 a 10])**
+    *   **Análise:** [Análise concisa sobre as ações descritas pelo candidato.]
+    *   **Sugestão:** [Sugestão de melhoria específica para a Ação.]
+
+    **4. Resultado (Nota: [Nota de 1 a 10])**
+    *   **Análise:** [Análise concisa sobre os resultados apresentados.]
+    *   **Sugestão:** [Sugestão de melhoria específica para o Resultado.]
+
+    ---
+
+    ### Sugestão de Resposta Aprimorada
+    [Forneça uma versão reescrita da resposta do candidato, ou um parágrafo com sugestões concretas, que incorpore as melhorias e siga o método STAR de forma exemplar.]
+
+    ---
+
+    Seja encorajador, mas direto e prático no seu feedback. Se a resposta do candidato for muito curta ou não tiver relação com a pergunta, atribua notas baixas e explique o porquê.
   `;
 
   try {
