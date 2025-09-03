@@ -8,7 +8,10 @@
 
 O **Simulador de Entrevista** é uma aplicação inteligente projetada para ajudar candidatos a se preparar para entrevistas de emprego. Atuando como um mentor virtual, ele faz perguntas e analisa a compatibilidade entre uma vaga de emprego e o currículo do usuário, oferecendo uma experiência de simulação completa e interativa.
 
-## Projeto no Google AI Studio
+## Projeto
+https://github.com/user-attachments/assets/f0f81664-efac-451a-9e99-894c2d5f81fa
+
+## Projeto Interativo no Google AI Studio
 https://ai.studio/apps/drive/1vV_sHtovNeTVolc52tzx4rDv6wApoTdN
 
 ## Funcionalidades Principais
